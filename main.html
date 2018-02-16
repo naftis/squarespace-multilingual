@@ -1,0 +1,140 @@
+<script>
+function addGlobalStyle(css) {
+    var head, style;
+    head = document.getElementsByTagName('head')[0];
+    if (!head) { return; }
+    style = document.createElement('style');
+    style.type = 'text/css';
+    style.innerHTML = css;
+    head.appendChild(style);
+}
+
+var style = `
+.lang-nav {
+  border: 2px solid #fff;
+  border-radius: 300px;
+  margin-left: 0;
+  padding: .75em .75em !important;
+}
+
+#mobileNavigation .lang-nav {
+  width: 5em;
+}
+
+.flag-icon {
+  background-size: contain;
+  background-position: 50%;
+  background-repeat: no-repeat;
+}
+
+.lang-nav .flag-icon {
+  display: inline-block;
+  width: 1.5em;
+  height: 1.5em;
+  line-height: 1em;
+}
+
+.subnav .flag-icon {
+  position: relative;
+  display: inline-block;
+  width: 1.33333333em;
+  line-height: 1em;
+  height: 1em;
+  font-size: .85em;
+  margin-right: .5em;
+}
+
+.flag-icon-cn {
+   background-image: url(https://lipis.github.io/flag-icon-css/flags/4x3/cn.svg);
+}
+.flag-icon-en {
+   background-image: url(https://lipis.github.io/flag-icon-css/flags/4x3/gb.svg);
+}`;
+
+addGlobalStyle(style);
+
+YUI().use('node', function(Y) {
+  // output a menu
+  var output = true;
+
+  // set default language
+  var language = 'en';
+
+  // define languages
+  var allowedLanguages = new Array();
+  allowedLanguages['en'] = {
+    label: 'English',
+    short: 'EN',
+    url: '/en/home',
+    flag: '<i class="flag-icon flag-icon-en"></i>',
+    lang: 'en-GB'
+  };
+  allowedLanguages['cn'] = {
+    label: 'Chinese',
+    short: 'CN',
+    url: '/cn/home',
+    flag: '<i class="flag-icon flag-icon-cn"></i>',
+    lang: 'cn-CN'
+  };
+
+  // detect current language
+  var urlparts = document.location.pathname;
+  if (urlparts.startsWith("/")) {
+    urlparts = urlparts.substr(1);
+  }
+  if (urlparts.endsWith("/")) {
+    urlparts = urlparts.substr(0, urlparts.length - 1);
+  }
+  if (urlparts.length) {
+    urlparts = urlparts.split("/");
+    if (urlparts[0] in allowedLanguages) {
+      language = urlparts[0];
+    }
+  }
+  
+  // if default language, print homepage
+  var homePageSelector = [
+    '#mainNavigation > div > a[href="/"]',
+    '#mobileNavigation > div > a[href="/"]'
+  ];
+  // if default language, print homepage
+  if(language === 'en') {
+   Y.all(homePageSelector.join()).setAttribute('href', allowedLanguages[language].url);
+  }
+  
+  // remove all nodes not in current language
+  var selector = [
+    '#mainNavigation > div > label:not([data-href*=\"/' + language + '/\"])',
+    '#mainNavigation > div > a:not([href*=\"/' + language + '/\"])',
+    '#mobileNavigation > div > label:not([data-href*=\"/' + language + '/\"])',
+    '#mobileNavigation > div > a:not([href*=\"/' + language + '/\"])'
+  ];
+  Y.all(selector.join()).get('parentNode').remove();
+
+  // change logo url
+  var logoSelector = '#logoWrapper a';
+  Y.all(logoSelector).setAttribute('href', allowedLanguages[language].url);
+  
+  // output: append to main and mobile navigation
+  if (output) {
+    Y.all('#mainNavigation,#mobileNavigation').append(buildLanguageMenuHTML(language, allowedLanguages, 'right top'));
+  }
+
+  // adapt html lang attribute
+  Y.one('html').setAttribute('lang', allowedLanguages[language].lang);
+});
+
+function buildLanguageMenuHTML(strCurrentLang, arrAllowedLangs, strClass) {
+  var htmlTemplate = '<div class="folder"><input type="checkbox" name="folder-toggle-lang-navigation" id="folder-toggle-lang-navigation" class="folder-toggle-box hidden"><div class="folder-toggle lang-nav" onclick="" data-href="' + arrAllowedLangs[strCurrentLang].url + '">' + arrAllowedLangs[strCurrentLang].flag + '</div><div class="subnav">###languages###</div></div>';
+  var htmlTemplateInner = '<div class="collection"><a href="###url###">###label###</a></div>';
+  var htmlInner = '';
+  var htmlOutput = '';
+  for (language in arrAllowedLangs) {
+    if (arrAllowedLangs.hasOwnProperty(language)) {
+      htmlInner += htmlTemplateInner.replace('###label###', arrAllowedLangs[language].flag + arrAllowedLangs[language].label).replace('###url###', arrAllowedLangs[language].url);
+    }
+  }
+  htmlOutput = htmlTemplate.replace('###languages###', htmlInner);
+  return htmlOutput;
+}
+</script>
