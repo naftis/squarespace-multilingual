@@ -43,8 +43,6 @@ YUI().use('node', function(Y) {
     currentLanguage = languages[0];
   }
   
-  console.log(currentLanguage);
-  
   // If default language, modify homepage url so it doesn't get removed
   if(modifyNavSlashUrl && currentLanguage.default) {
     var homePageSelectors = [
