@@ -14,3 +14,8 @@ Demo: http://wildblueberry.fi
 1. Change your pages' url slugs to /`lang`/`pagename`, example: /en/home or /ch/home.
 2. Go to Settings > Advanced > Code Injection and insert the code from `main.html` to the Footer-section.
 3. Modify the code to your liking. You need to change the `languages` array (and maybe the HTML templates + CSS sheet)
+
+## Compability & requirements
+
+* ECMAScript 5
+* YUI (provided by Squarespace)
