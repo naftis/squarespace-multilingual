@@ -10,5 +10,5 @@ Demo: http://wildblueberry.fi
 ## Installation
 
 1. Change your pages' url slugs to /`lang`/`pagename`, example: /en/home or /ch/home.
-2. Go to Settings > Advanced > Code Injection and insert the code to the Footer-section.
+2. Go to Settings > Advanced > Code Injection and insert the code from `main.html` to the Footer-section.
 3. Change the allowedLanguages -array to your liking from the code.
