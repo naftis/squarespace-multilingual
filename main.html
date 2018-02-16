@@ -1,136 +1,126 @@
 <script>
 YUI().use('node', function(Y) {
-  // output a menu
-  var output = true;
+  var printLanguageMenu = true;
+  var modifyNavSlashUrl = true; // Default /-homepage from navigation doesn't get removed if true
 
-  // set default language
-  var language = 'en';
-
-  // define languages
-  var allowedLanguages = new Array();
-  allowedLanguages['en'] = {
-    label: 'English',
-    short: 'EN',
-    url: '/en/home',
-    flag: '<i class="flag-icon flag-icon-en"></i>',
-    lang: 'en-GB'
-  };
-  allowedLanguages['cn'] = {
-    label: 'Chinese',
-    short: 'CN',
-    url: '/cn/home',
-    flag: '<i class="flag-icon flag-icon-cn"></i>',
-    lang: 'cn-CN'
-  };
-
-  // detect current language
-  var urlparts = document.location.pathname;
-  if (urlparts.startsWith("/")) {
-    urlparts = urlparts.substr(1);
-  }
-  if (urlparts.endsWith("/")) {
-    urlparts = urlparts.substr(0, urlparts.length - 1);
-  }
-  if (urlparts.length) {
-    urlparts = urlparts.split("/");
-    if (urlparts[0] in allowedLanguages) {
-      language = urlparts[0];
+  // Define languages
+  var languages = [
+    {
+      urlPath: 'en', // yourpage.com/[this]/home
+      label: 'English', // language navigation label
+      home: '/en/home/',
+      htmlLang: 'en', // https://www.w3schools.com/tags/ref_language_codes.asp
+      flag: 'https://lipis.github.io/flag-icon-css/flags/4x3/gb.svg',
+      default: true,
+    },
+    {
+      urlPath: 'cn',
+      label: 'Chinese',
+      home: '/cn/home/',
+      htmlLang: 'zh',
+      flag: 'https://lipis.github.io/flag-icon-css/flags/4x3/cn.svg'
     }
-  }
-  
-  // if default language, print homepage
-  var homePageSelector = [
-    '#mainNavigation > div > a[href="/"]',
-    '#mobileNavigation > div > a[href="/"]'
   ];
-  if(language === 'en') {
-   Y.all(homePageSelector.join()).setAttribute('href', allowedLanguages[language].url);
-  }
-  
-  // remove all nodes not in current language
-  var selector = [
-    '#mainNavigation > div > label:not([data-href*=\"/' + language + '/\"])',
-    '#mainNavigation > div > a:not([href*=\"/' + language + '/\"])',
-    '#mobileNavigation > div > label:not([data-href*=\"/' + language + '/\"])',
-    '#mobileNavigation > div > a:not([href*=\"/' + language + '/\"])'
-  ];
-  Y.all(selector.join()).get('parentNode').remove();
 
-  // change logo url
-  Y.all('#logoWrapper a').setAttribute('href', allowedLanguages[language].url);
-  
-  // output: append to main and mobile navigation
-  if (output) {
-    Y.all('#mainNavigation,#mobileNavigation').append(buildLanguageMenuHTML(language, allowedLanguages, 'right top'));
+  if(!printLanguageMenu) {
+    return;
   }
 
-  // adapt html lang attribute
-  Y.one('html').setAttribute('lang', allowedLanguages[language].lang);
+  // Detect current language
+  var urlParts = document.location.pathname.split('/');
+  var currentLanguages = languages.filter((function(language) {
+    return language.urlPath === urlParts[1];
+  }));
+  
+  if(currentLanguages.length === 0) {
+    currentLanguages = languages.filter((function(language) {
+      return language.default === true;
+    }));
+  }
+  
+  var currentLanguage = currentLanguages[0];
+  if(!currentLanguage) {
+    currentLanguage = languages[0];
+  }
+  
+  console.log(currentLanguage);
+  
+  // If default language, modify homepage url so it doesn't get removed
+  if(modifyNavSlashUrl && currentLanguage.default) {
+    var homePageSelectors = [
+      '#mainNavigation > div > a[href="/"]',
+      '#mobileNavigation > div > a[href="/"]'
+    ];
+    Y.all(homePageSelectors.join()).setAttribute('href', currentLanguage.home);
+  }
+  
+  // Remove all pages which aren't the current language
+  var wrongLanguageSelectors = [
+    '#mainNavigation > div > a:not([href*=\"/' + currentLanguage.urlPath + '/\"])',
+    '#mobileNavigation > div > a:not([href*=\"/' + currentLanguage.urlPath + '/\"])'
+  ];
+  Y.all(wrongLanguageSelectors.join()).get('parentNode').remove();
+  
+  // Change logo URL
+  Y.all('#siteTitle a, #logoImage a').setAttribute('href', currentLanguage.home);
+  
+  // Add language menus
+  var languagesTemplate = languages.map(function(language) {
+    return `<div class="collection"><a href="${language.home}"><span class="flag-icon flag-icon-${language.urlPath}"></span>${language.label}</a></div>`;
+  }).join('');
+  
+  var languageTemplate = `
+<div class="folder">
+  <div class="folder-toggle lang-nav" onclick="" data-href="${currentLanguage.home}"><span class="flag-icon flag-icon-${currentLanguage.urlPath}"></span></div>
+  <div class="subnav">${languagesTemplate}</div>
+</div>`;
+  
+  Y.all('#mainNavigation, #mobileNavigation').append(languageTemplate);
+  
+  // Adapt HTML lang attribute
+  Y.one('html').setAttribute('lang', currentLanguage.htmlLang);
+  
+  // Add CSS
+  var flags = languages.map(function(language) {
+    return `.flag-icon-${language.urlPath} { background-image: url('${language.flag}'); }`;
+  }).join('\n');
+  
+  var style = `
+  .lang-nav {
+    border: 2px solid #fff;
+    border-radius: 300px;
+    margin-left: 0;
+    padding: .75em .75em !important;
+  }
+
+  #mobileNavigation .lang-nav {
+    width: 5em;
+  }
+
+  .flag-icon {
+    background-size: contain;
+    background-position: 50%;
+    background-repeat: no-repeat;
+  }
+
+  .lang-nav .flag-icon {
+    display: inline-block;
+    width: 1.5em;
+    height: 1.5em;
+    line-height: 1em;
+  }
+
+  .subnav .flag-icon {
+    position: relative;
+    display: inline-block;
+    width: 1.33333333em;
+    line-height: 1em;
+    height: 1em;
+    font-size: .85em;
+    margin-right: .5em;
+  }
+`;
+  var styleSheet = `<style type="text/css">${style}${flags}</style>`;
+  Y.one('head').append(styleSheet);
 });
-
-function buildLanguageMenuHTML(strCurrentLang, arrAllowedLangs, strClass) {
-  var htmlTemplate = '<div class="folder"><input type="checkbox" name="folder-toggle-lang-navigation" id="folder-toggle-lang-navigation" class="folder-toggle-box hidden"><div class="folder-toggle lang-nav" onclick="" data-href="' + arrAllowedLangs[strCurrentLang].url + '">' + arrAllowedLangs[strCurrentLang].flag + '</div><div class="subnav">###languages###</div></div>';
-  var htmlTemplateInner = '<div class="collection"><a href="###url###">###label###</a></div>';
-  var htmlInner = '';
-  for (language in arrAllowedLangs) {
-    if (arrAllowedLangs.hasOwnProperty(language)) {
-      htmlInner += htmlTemplateInner.replace('###label###', arrAllowedLangs[language].flag + arrAllowedLangs[language].label).replace('###url###', arrAllowedLangs[language].url);
-    }
-  }
-  return htmlTemplate.replace('###languages###', htmlInner);
-}
-
-function addGlobalStyle(css) {
-    var head, style;
-    head = document.getElementsByTagName('head')[0];
-    if (!head) { return; }
-    style = document.createElement('style');
-    style.type = 'text/css';
-    style.innerHTML = css;
-    head.appendChild(style);
-}
-
-var style = `
-.lang-nav {
-  border: 2px solid #fff;
-  border-radius: 300px;
-  margin-left: 0;
-  padding: .75em .75em !important;
-}
-
-#mobileNavigation .lang-nav {
-  width: 5em;
-}
-
-.flag-icon {
-  background-size: contain;
-  background-position: 50%;
-  background-repeat: no-repeat;
-}
-
-.lang-nav .flag-icon {
-  display: inline-block;
-  width: 1.5em;
-  height: 1.5em;
-  line-height: 1em;
-}
-
-.subnav .flag-icon {
-  position: relative;
-  display: inline-block;
-  width: 1.33333333em;
-  line-height: 1em;
-  height: 1em;
-  font-size: .85em;
-  margin-right: .5em;
-}
-
-.flag-icon-cn {
-   background-image: url(https://lipis.github.io/flag-icon-css/flags/4x3/cn.svg);
-}
-.flag-icon-en {
-   background-image: url(https://lipis.github.io/flag-icon-css/flags/4x3/gb.svg);
-}`;
-
-addGlobalStyle(style);
 </script>
