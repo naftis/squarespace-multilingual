@@ -2,7 +2,8 @@
 YUI().use('node', function(Y) {
   var printLanguageMenu = true;
   var modifyNavSlashUrl = true; // Default /-homepage from navigation doesn't get removed if true
-
+  var changeLanguageToSamePage = true; // For example, /en/images would go to /cn/images if the page exists
+  
   // Define languages
   var languages = [
     {
@@ -21,11 +22,9 @@ YUI().use('node', function(Y) {
       flag: 'https://lipis.github.io/flag-icon-css/flags/4x3/cn.svg'
     }
   ];
-
   if(!printLanguageMenu) {
     return;
   }
-
   // Detect current language
   var urlParts = document.location.pathname.split('/');
   var currentLanguages = languages.filter((function(language) {
@@ -43,6 +42,28 @@ YUI().use('node', function(Y) {
     currentLanguage = languages[0];
   }
   
+  // Add language menus
+  var languagesTemplate = languages.map(function(language) {
+    var languagePage = language.home;
+    
+    // Change language directs to the same page
+    var haveUrlParts = urlParts[2] && urlParts[2].length > 0;
+    var haveNavPage = Y.one('#mainNavigation > div > a[href*="/' + language.urlPath + '/' + urlParts[2] + '"]');
+    
+    if(changeLanguageToSamePage && haveUrlParts && haveNavPage) {
+      languagePage = '/' + language.urlPath + '/' + urlParts[2];
+    }
+    
+    return '<div class="collection"><a href="' + languagePage + '"><span class="flag-icon flag-icon-' + language.urlPath + '"></span>' + language.label + '</a></div>';
+  }).join('');
+  
+  var languageTemplate = ['<div class="folder">',
+    '<div class="folder-toggle lang-nav" onclick="" data-href="' + currentLanguage.home + '"><span class="flag-icon flag-icon-' + currentLanguage.urlPath + '"></span></div>',
+    '<div class="subnav">' + languagesTemplate + '</div>',
+  '</div>'].join('\n');
+  
+  Y.all('#mainNavigation, #mobileNavigation').append(languageTemplate);
+  
   // If default language, modify homepage url so it doesn't get removed
   if(modifyNavSlashUrl && currentLanguage.default) {
     var homePageSelectors = [
@@ -54,71 +75,51 @@ YUI().use('node', function(Y) {
   
   // Remove all pages which aren't the current language
   var wrongLanguageSelectors = [
-    '#mainNavigation > div > a:not([href*=\"/' + currentLanguage.urlPath + '/\"])',
-    '#mobileNavigation > div > a:not([href*=\"/' + currentLanguage.urlPath + '/\"])'
+    '#mainNavigation > div > a:not([href*="/' + currentLanguage.urlPath + '/"])',
+    '#mobileNavigation > div > a:not([href*="/' + currentLanguage.urlPath + '/"])'
   ];
   Y.all(wrongLanguageSelectors.join()).get('parentNode').remove();
   
   // Change logo URL
   Y.all('#siteTitle a, #logoImage a').setAttribute('href', currentLanguage.home);
   
-  // Add language menus
-  var languagesTemplate = languages.map(function(language) {
-    return `<div class="collection"><a href="${language.home}"><span class="flag-icon flag-icon-${language.urlPath}"></span>${language.label}</a></div>`;
-  }).join('');
-  
-  var languageTemplate = `
-<div class="folder">
-  <div class="folder-toggle lang-nav" onclick="" data-href="${currentLanguage.home}"><span class="flag-icon flag-icon-${currentLanguage.urlPath}"></span></div>
-  <div class="subnav">${languagesTemplate}</div>
-</div>`;
-  
-  Y.all('#mainNavigation, #mobileNavigation').append(languageTemplate);
-  
   // Adapt HTML lang attribute
   Y.one('html').setAttribute('lang', currentLanguage.htmlLang);
   
   // Add CSS
   var flags = languages.map(function(language) {
-    return `.flag-icon-${language.urlPath} { background-image: url('${language.flag}'); }`;
+    return '.flag-icon-' + language.urlPath + ' { background-image: url(' + language.flag + '); }';
   }).join('\n');
   
-  var style = `
-  .lang-nav {
-    border: 2px solid #fff;
-    border-radius: 300px;
-    margin-left: 0;
-    padding: .75em .75em !important;
-  }
-
-  #mobileNavigation .lang-nav {
-    width: 5em;
-  }
-
-  .flag-icon {
-    background-size: contain;
-    background-position: 50%;
-    background-repeat: no-repeat;
-  }
-
-  .lang-nav .flag-icon {
-    display: inline-block;
-    width: 1.5em;
-    height: 1.5em;
-    line-height: 1em;
-  }
-
-  .subnav .flag-icon {
-    position: relative;
-    display: inline-block;
-    width: 1.33333333em;
-    line-height: 1em;
-    height: 1em;
-    font-size: .85em;
-    margin-right: .5em;
-  }
-`;
-  var styleSheet = `<style type="text/css">${style}${flags}</style>`;
+  var style = ['.lang-nav {',
+      'border: 2px solid #fff;',
+      'border-radius: 300px;',
+      'margin-left: 0;',
+      'padding: .75em .75em !important; }',
+               
+    '#mobileNavigation .lang-nav { width: 5em; }',
+               
+    '.flag-icon {',
+      'background-size: contain;',
+      'background-position: 50%;',
+      'background-repeat: no-repeat; }',
+               
+    '.lang-nav .flag-icon {',
+      'display: inline-block;',
+      'width: 1.5em;',
+      'height: 1.5em;',
+      'line-height: 1em; }',
+               
+    '.subnav .flag-icon {',
+      'position: relative;',
+      'display: inline-block;',
+      'width: 1.33333333em;',
+      'line-height: 1em;',
+      'height: 1em;',
+      'font-size: .85em;',
+      'margin-right: .5em;}'].join('\n');
+               
+  var styleSheet = '<style type="text/css">' + style + flags + '</style>';
   Y.one('head').append(styleSheet);
 });
 </script>
