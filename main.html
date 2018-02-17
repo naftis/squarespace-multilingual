@@ -54,7 +54,7 @@ YUI().use('node', function(Y) {
       languagePage = '/' + language.urlPath + '/' + urlParts[2];
     }
     
-    return '<div class="collection"><a href="' + languagePage + '"><span class="flag-icon flag-icon-' + language.urlPath + '"></span>' + language.label + '</a></div>';
+    return '<div class="collection language"><a href="' + languagePage + '"><span class="flag-icon flag-icon-' + language.urlPath + '"></span>' + language.label + '</a></div>';
   }).join('');
   
   var languageTemplate = ['<div class="folder">',
@@ -62,8 +62,12 @@ YUI().use('node', function(Y) {
     '<div class="subnav">' + languagesTemplate + '</div>',
   '</div>'].join('\n');
   
-  Y.all('#mainNavigation, #mobileNavigation').append(languageTemplate);
-  
+  Y.all('#mainNavigation').append(languageTemplate);
+  Y.all('#mobileNavigation')
+    .append(languagesTemplate)
+  // Add extra hidden link for mobile nav to remove :last-child effects for our languages
+    .append('<div class="collection language" style="display:none"></div>');
+
   // If default language, modify homepage url so it doesn't get removed
   if(modifyNavSlashUrl && currentLanguage.default) {
     var homePageSelectors = [
@@ -75,8 +79,8 @@ YUI().use('node', function(Y) {
   
   // Remove all pages which aren't the current language
   var wrongLanguageSelectors = [
-    '#mainNavigation > div > a:not([href*="/' + currentLanguage.urlPath + '/"])',
-    '#mobileNavigation > div > a:not([href*="/' + currentLanguage.urlPath + '/"])'
+    '#mainNavigation > div:not(.language) > a:not([href*="/' + currentLanguage.urlPath + '/"])',
+    '#mobileNavigation > div:not(.language) > a:not([href*="/' + currentLanguage.urlPath + '/"])'
   ];
   Y.all(wrongLanguageSelectors.join()).get('parentNode').remove();
   
@@ -97,27 +101,27 @@ YUI().use('node', function(Y) {
       'margin-left: 0;',
       'padding: .75em .75em !important; }',
                
-    '#mobileNavigation .lang-nav { width: 5em; }',
-               
     '.flag-icon {',
       'background-size: contain;',
       'background-position: 50%;',
       'background-repeat: no-repeat; }',
                
-    '.lang-nav .flag-icon {',
-      'display: inline-block;',
-      'width: 1.5em;',
-      'height: 1.5em;',
-      'line-height: 1em; }',
-               
-    '.subnav .flag-icon {',
+    '.flag-icon {',
       'position: relative;',
       'display: inline-block;',
-      'width: 1.33333333em;',
+      'width: 1.33em;',
       'line-height: 1em;',
       'height: 1em;',
-      'font-size: .85em;',
-      'margin-right: .5em;}'].join('\n');
+      'margin-right: .5em;',
+      'font-size: .85em;}',
+               
+    '.lang-nav .flag-icon {',
+      'width: 1.5em;',
+      'height: 1.25em;',
+      'line-height: 1em;',
+      'font-size: 1em;',
+      'margin-right: 0; }',
+  ].join('\n');
                
   var styleSheet = '<style type="text/css">' + style + flags + '</style>';
   Y.one('head').append(styleSheet);
